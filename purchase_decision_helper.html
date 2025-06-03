@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>구매 결정 목적 판단 도우미</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      background-color: #fff9f9;
+      padding: 0;
+    }
+    .container {
+      max-width: 480px;
+      margin: auto;
+      padding: 20px;
+      background-color: #ffeef2;
+      min-height: 100vh;
+    }
+    .question {
+      font-size: 1.3em;
+      text-align: center;
+      margin: 30px 0;
+      color: #cc3366;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+    }
+    .button {
+      background-color: #ff99cc;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 20px;
+      width: 80%;
+      font-size: 1.1em;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    .button:hover {
+      background-color: #ff66aa;
+    }
+    .result {
+      font-size: 1.2em;
+      margin-top: 30px;
+      text-align: center;
+      color: #444;
+    }
+    .emoji {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="question" id="question">🤔 지금 이 물건의 구매 목적은 무엇인가요?</div>
+    <div class="options" id="buttons">
+      <button class="button" onclick="choosePurpose('essential')">🧻 생필품</button>
+      <button class="button" onclick="choosePurpose('hobby')">🎨 취미/자기만족용</button>
+      <button class="button" onclick="choosePurpose('impulse')">🔥 충동/감정해소용</button>
+      <button class="button" onclick="choosePurpose('tech')">📱 전자기기</button>
+      <button class="button" onclick="choosePurpose('gift')">🎁 선물용</button>
+    </div>
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    let impulseStep = 0;
+
+    function choosePurpose(type) {
+      const question = document.getElementById("question");
+      const buttons = document.getElementById("buttons");
+      const result = document.getElementById("result");
+      buttons.innerHTML = "";
+      result.innerHTML = "";
+
+      if (type === 'impulse') {
+        impulseStep = 1;
+        question.innerText = "😤 지금 기분이 소비를 유도하고 있나요?";
+        buttons.innerHTML = `
+          <button class="button" onclick="nextImpulse('yes')">예</button>
+          <button class="button" onclick="nextImpulse('no')">아니오</button>
+        `;
+        return;
+      }
+
+      switch(type) {
+        case 'essential':
+          question.innerText = "✅ 지금 꼭 필요한가요?";
+          buttons.innerHTML = `
+            <button class="button" onclick="showResult('🛒 생필품이 맞고 사용 중이라면 구매해도 좋습니다!')">예</button>
+            <button class="button" onclick="showResult('📦 집에 남은 재고가 있다면 다 쓴 후 재구매하세요!')">아니오</button>
+          `;
+          break;
+        case 'hobby':
+          question.innerText = "🎯 이 취미는 최소 3개월 이상 유지할 수 있을까요?";
+          buttons.innerHTML = `
+            <button class="button" onclick="showResult('🌟 지속 가능한 취미라면, 예산 내 소비는 긍정적입니다!')">예</button>
+            <button class="button" onclick="showResult('📁 과거에 비슷한 걸 사고도 안 썼다면, 재고 먼저 확인해보세요!')">아니오</button>
+          `;
+          break;
+        case 'tech':
+          question.innerText = "📱 지금 사용하는 기기가 기능적으로 부족한가요?";
+          buttons.innerHTML = `
+            <button class="button" onclick="showResult('🔋 성능 부족으로 불편하다면, 합리적 교체일 수 있습니다!')">예</button>
+            <button class="button" onclick="showResult('🪫 아직 쓸만하다면, 교체보다 유지가 경제적입니다.')">아니오</button>
+          `;
+          break;
+        case 'gift':
+          question.innerText = "🎁 이 선물은 상대에게 실용적이고 의미 있을까요?";
+          buttons.innerHTML = `
+            <button class="button" onclick="showResult('💝 의미 있는 선물이라면, 적절한 지출입니다!')">예</button>
+            <button class="button" onclick="showResult('🤔 그냥 형식적인 선물이라면, 대안(편지, 시간 등)을 고려해보세요!')">아니오</button>
+          `;
+          break;
+      }
+    }
+
+    function nextImpulse(answer) {
+      const question = document.getElementById("question");
+      const buttons = document.getElementById("buttons");
+      if (impulseStep === 1 && answer === 'yes') {
+        impulseStep = 2;
+        question.innerText = "💡 감정을 해소할 다른 방법(산책, 대화 등)을 고려해봤나요?";
+        buttons.innerHTML = `
+          <button class="button" onclick="nextImpulse('yes2')">예</button>
+          <button class="button" onclick="nextImpulse('no2')">아니오</button>
+        `;
+      } else if (impulseStep === 1 && answer === 'no') {
+        showResult('👍 감정적 요소가 아니라면, 필요성 기준으로 판단해보세요!');
+      } else if (impulseStep === 2 && answer === 'yes2') {
+        showResult('🧘 감정 소비보다 다른 방식으로 스트레스를 해소해보세요. 소비는 나중에!');
+      } else if (impulseStep === 2 && answer === 'no2') {
+        question.innerText = "⏳ 1~3일 정도 미뤄보고 다시 사고 싶은지 생각해봤나요?";
+        buttons.innerHTML = `
+          <button class="button" onclick="showResult('✅ 충동이 아닌 지속적 욕구라면, 합리적으로 판단 가능합니다.')">예</button>
+          <button class="button" onclick="showResult('❌ 지금은 감정에 따른 소비일 수 있어요. 하루만 기다려보세요!')">아니오</button>
+        `;
+      }
+    }
+
+    function showResult(message) {
+      const question = document.getElementById("question");
+      const buttons = document.getElementById("buttons");
+      const result = document.getElementById("result");
+
+      question.innerText = "💡 소비 판단 결과";
+      buttons.innerHTML = "";
+      result.innerHTML = `<div class="emoji">📊</div><div>${message}</div>`;
+    }
+  </script>
+</body>
+</html>
