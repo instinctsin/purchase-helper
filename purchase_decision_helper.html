@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>구매 의사 결정 도우미 V2 - 최종 통합 (복사 기능 포함)</title>
+  <title>구매 의사 결정 도우미 V2 - 최종 통합 (로그 수정)</title>
   <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nanum+Gothic&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after {
@@ -30,7 +30,6 @@
       color: #d26a94;
       text-align: center;
     }
-    /* 경로 추적 스타일 */
     #path-tracker {
       margin-bottom: 20px;
       padding: 15px;
@@ -67,8 +66,6 @@
     #path-list li:last-child {
         border-bottom: none;
     }
-
-    /* 질문 영역 스타일 */
     #question-area {
       padding: 20px;
       border: 2px solid #ffe4ec;
@@ -80,7 +77,6 @@
       margin-top: 0;
       color: #e6739f;
     }
-    /* 아이템 입력 필드 스타일 */
     #item-input {
       margin-bottom: 20px;
     }
@@ -103,8 +99,6 @@
         border-color: #ff8fa3;
         box-shadow: 0 0 5px rgba(255, 182, 193, 0.5);
     }
-
-    /* 옵션 버튼 스타일 */
     #options-area button {
       display: block;
       width: 100%;
@@ -138,8 +132,6 @@
     #options-area button.tertiary:hover {
       background-color: #c9302c;
     }
-
-    /* 결과 영역 스타일 */
     #result-area {
       padding: 20px;
       background-color: #e0ffe0;
@@ -171,9 +163,7 @@
       transform: translateY(-2px) scale(1.05);
       box-shadow: 0 6px 12px rgba(173, 216, 230, 0.5);
     }
-
-    /* 요약 및 버튼 그룹 스타일 */
-    .summary-and-buttons-container { /* 클래스명 일관성 있게 수정 */
+    .summary-and-buttons-container {
         margin-top: 20px;
         padding: 15px;
         background-color: #f8f9fa;
@@ -199,13 +189,13 @@
         padding: 3px 0;
         color: #6c757d;
     }
-    .buttons-group { /* 버튼들을 그룹핑하기 위한 스타일 */
+    .buttons-group {
         margin-top: 15px;
         padding-top: 10px;
         border-top: 1px solid #eee;
-        text-align: center; /* 버튼들 가운데 정렬 */
+        text-align: center;
     }
-    .buttons-group button { /* 모든 그룹 내 버튼 공통 스타일 */
+    .buttons-group button {
         padding: 8px 15px;
         margin: 5px;
         border-radius: 20px;
@@ -226,7 +216,6 @@
     .buttons-group button.save-pdf:hover { background-color: #c82333; }
     .buttons-group button.copy-button { background-color: #17a2b8; }
     .buttons-group button.copy-button:hover { background-color: #138496; }
-
   </style>
 </head>
 <body>
@@ -248,7 +237,6 @@
     <div id="result-area" style="display: none;">
       <h2 id="result-title"></h2>
       <p id="result-text"></p>
-      <!-- 요약 및 버튼이 여기에 동적으로 추가됩니다. -->
       <button id="restart-button">🔄 처음부터 다시 고민하기 🔄</button>
     </div>
   </div>
@@ -296,8 +284,12 @@
     }
 
     function displayQuestion(nodeId) {
-      if (nodeId === 'start' && !itemNameInput.value.trim()) {
-        itemNameInput.focus();
+      // 첫 질문 시작 시 또는 아이템 이름이 없을 때 아이템 입력에 포커스
+      // currentQuestionId를 사용하여 현재 어떤 질문을 처리 중인지 명확히 함
+      if (nodeId === 'start' && (currentQuestionId === 'start' || userPath.length <= 1) ) {
+        if (!itemNameInput.value.trim()) {
+            itemNameInput.focus();
+        }
       }
 
       const node = decisionTree[nodeId];
@@ -314,12 +306,12 @@
         } else {
           resultArea.classList.add('positive');
         }
-        logToPath(`➡️ 최종 결과: ${removeEmoji(node.result.title)}`, `➡️ 최종 결과: ${node.result.title}`);
-        displaySummaryAndButtons(); // 함수명 변경에 따른 호출 변경
+        // 최종 결과 표시는 여기서, 로그 기록은 displaySummaryAndButtons에서 처리
+        displaySummaryAndButtons();
         return;
       }
 
-      if (nodeId !== 'start' && !itemNameInput.value.trim()) {
+      if (nodeId !== 'start' && !itemNameInput.value.trim() && currentQuestionId !== 'start') { // currentQuestionId 조건 추가
           alert("구매하려는 물건/서비스를 먼저 입력해주세요! 🛍️");
           itemNameInput.focus();
           return;
@@ -336,9 +328,10 @@
         button.textContent = option.text;
         if (option.type) button.classList.add(option.type);
         button.onclick = () => {
+          // 버튼 클릭 시에만 질문/선택 로그 기록
           logToPath(`"${removeEmoji(node.title)}" 질문에 "${removeEmoji(option.text)}" 선택`, `"${node.title}" 질문에 "${option.text}" 선택`);
-          currentQuestionId = option.nextNodeId;
-          displayQuestion(currentQuestionId);
+          currentQuestionId = option.nextNodeId; // currentQuestionId 업데이트
+          displayQuestion(currentQuestionId);    // 업데이트된 ID로 다음 질문 표시
           window.scrollTo(0, 0);
         };
         optionsArea.appendChild(button);
@@ -355,7 +348,7 @@
       pathListEl.scrollTop = pathListEl.scrollHeight;
     }
 
-    function displaySummaryAndButtons() { // 함수명 변경
+    function displaySummaryAndButtons() {
       const existingContainer = resultArea.querySelector('.summary-and-buttons-container');
       if (existingContainer) {
         resultArea.removeChild(existingContainer);
@@ -365,20 +358,32 @@
       const container = document.createElement('div');
       container.classList.add('summary-and-buttons-container');
 
+      const finalResultLogForData = `➡️ 최종 결과: ${removeEmoji(resultTitleEl.textContent)}`;
+      const finalResultLogForDisplay = `➡️ 최종 결과: ${resultTitleEl.textContent}`;
+
+      // 최종 결과 로그가 아직 기록되지 않았다면 기록
+      if (userPath.length === 0 || userPath[userPath.length - 1] !== finalResultLogForData) {
+          userPath.push(finalResultLogForData);
+          originalUserPathWithEmoji.push(finalResultLogForDisplay);
+          // 화면의 path-list에도 최종 결과 로그 추가 (선택적)
+          // const li = document.createElement('li');
+          // li.textContent = finalResultLogForDisplay;
+          // li.style.fontWeight = 'bold';
+          // pathListEl.appendChild(li);
+          // pathListEl.scrollTop = pathListEl.scrollHeight;
+      }
+
       let summaryHTML = '<h3>📌 나의 결정 되짚어보기 📌</h3>';
       summaryHTML += `<p><strong>구매 대상:</strong> ${item}</p><ul>`;
-      originalUserPathWithEmoji.forEach(step => {
-        if (!step.startsWith("➡️ 최종 결과:")) {
-            summaryHTML += `<li>${step}</li>`;
-        }
+      originalUserPathWithEmoji.slice(0, -1).filter(p => !p.includes("도우미를 시작합니다")).forEach(step => {
+        summaryHTML += `<li>${step}</li>`;
       });
       summaryHTML += '</ul>';
       container.innerHTML = summaryHTML;
 
-      const buttonsGroup = document.createElement('div'); // 버튼들을 담을 그룹
+      const buttonsGroup = document.createElement('div');
       buttonsGroup.classList.add('buttons-group');
 
-      // 파일 저장 버튼들
       ['txt', 'md', 'json'].forEach(ext => {
         const btn = document.createElement('button');
         btn.textContent = `💾 ${ext.toUpperCase()}로 저장`;
@@ -392,33 +397,26 @@
           const dateString = `${year}${month}${day}`;
           const safeItemName = removeEmoji(item).replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '');
           const fileNameBase = `purchase_decision_${safeItemName || 'item'}_${dateString}`;
-
           const finalDecisionTitle = removeEmoji(resultTitleEl.textContent);
           const finalDecisionText = removeEmoji(resultTextEl.textContent.split('\n\n🛍️')[0]);
+          const pathToSave = userPath.filter(p => !p.includes("도우미를 시작합니다")).join('\n');
 
           if (ext === 'txt') {
-            content = `구매 의사 결정 결과 (${dateString})\n\n구매 대상: ${item}\n\n## 결정 경로:\n${userPath.join('\n')}\n\n---\n최종 결정: ${finalDecisionTitle}\n${finalDecisionText}`;
+            content = `구매 의사 결정 결과 (${dateString})\n\n구매 대상: ${item}\n\n## 결정 경로:\n${pathToSave}\n\n---\n최종 결정 요약: ${finalDecisionTitle}\n${finalDecisionText}`;
           } else if (ext === 'md') {
-            content = `# 구매 의사 결정 결과 (${dateString})\n\n**구매 대상:** ${item}\n\n## 결정 경로\n${userPath.map(s => `- ${s}`).join('\n')}\n\n---\n**최종 결정:** ${finalDecisionTitle}\n\n${finalDecisionText}`;
+            content = `# 구매 의사 결정 결과 (${dateString})\n\n**구매 대상:** ${item}\n\n## 결정 경로\n${userPath.filter(p => !p.includes("도우미를 시작합니다")).map(s => `- ${s}`).join('\n')}\n\n---\n**최종 결정 요약:** ${finalDecisionTitle}\n\n${finalDecisionText}`;
           } else {
             content = JSON.stringify({
-              itemName: item,
-              decisionDate: `${year}-${month}-${day}`,
-              decisionPath: userPath,
-              fullLogWithEmoji: originalUserPathWithEmoji,
-              finalDecisionTitle: finalDecisionTitle,
-              finalDecisionText: finalDecisionText
+              itemName: item, decisionDate: `${year}-${month}-${day}`,
+              decisionPath: userPath.filter(p => !p.includes("도우미를 시작합니다")),
+              finalDecisionTitle: finalDecisionTitle, finalDecisionText: finalDecisionText
             }, null, 2);
           }
           const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
-          a.href = url;
-          a.download = `${fileNameBase}.${ext}`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+          a.href = url; a.download = `${fileNameBase}.${ext}`; document.body.appendChild(a);
+          a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         };
         buttonsGroup.appendChild(btn);
       });
@@ -435,21 +433,17 @@
           const dateString = `${year}${month}${day}`;
           const safeItemName = removeEmoji(item).replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '');
           const fileNameBase = `purchase_decision_${safeItemName || 'item'}_${dateString}`;
-
           let pdfContentHTML = `<h1>💕 구매 의사 결정 결과 💕</h1>`;
           pdfContentHTML += `<h2>✨ "${item}"에 대한 결정 (${year}-${month}-${day}) ✨</h2>`;
           pdfContentHTML += `<h3>최종 결과: ${resultTitleEl.textContent}</h3>`;
           pdfContentHTML += `<p>${resultTextEl.textContent.replace(/\n/g, '<br>')}</p>`;
           pdfContentHTML += `<h3>📌 나의 결정 되짚어보기 📌</h3><ul>`;
-          originalUserPathWithEmoji.forEach(step => {
-             if (!step.startsWith("➡️ 최종 결과:")) {
-                pdfContentHTML += `<li>${step}</li>`;
-            }
+          originalUserPathWithEmoji.filter(p => !p.includes("도우미를 시작합니다") && !p.startsWith("➡️ 최종 결과:")).forEach(step => {
+            pdfContentHTML += `<li>${step}</li>`;
           });
           pdfContentHTML += `</ul>`;
           const elementToPrint = document.createElement('div');
-          elementToPrint.style.fontFamily = "'Nanum Gothic', 'Jua', sans-serif";
-          elementToPrint.style.padding = "20px";
+          elementToPrint.style.fontFamily = "'Nanum Gothic', 'Jua', sans-serif"; elementToPrint.style.padding = "20px";
           elementToPrint.innerHTML = pdfContentHTML;
           const opt = { margin: 1, filename: `${fileNameBase}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas:  { scale: 2, logging: true, useCORS: true, letterRendering: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }};
           html2pdf().from(elementToPrint).set(opt).save();
@@ -459,7 +453,6 @@
       };
       buttonsGroup.appendChild(pdfBtn);
 
-      // 결과 내용 복사 버튼
       const copyBtn = document.createElement('button');
       copyBtn.textContent = '📋 결과 내용 복사';
       copyBtn.classList.add('copy-button');
@@ -469,17 +462,10 @@
         const itemNameToCopy = itemNameInput.value.trim() || '입력된 아이템 없음';
         const resultTitleToCopy = resultTitleEl.textContent;
         const resultTextToCopy = resultTextEl.textContent.split('\n\n🛍️')[0];
-        
-        let contentToCopy = `🛍️ 구매 대상: ${itemNameToCopy}\n`;
-        contentToCopy += `🗓️ 결정일: ${dateString}\n\n`;
-        contentToCopy += `✨ 최종 결정: ${resultTitleToCopy}\n${resultTextToCopy}\n\n`;
-        contentToCopy += `📌 결정 경로 요약:\n`;
-        originalUserPathWithEmoji.forEach(step => {
-          if (!step.startsWith("➡️ 최종 결과:")) {
-            contentToCopy += `- ${step}\n`;
-          }
+        let contentToCopy = `🛍️ 구매 대상: ${itemNameToCopy}\n🗓️ 결정일: ${dateString}\n\n✨ 최종 결정: ${resultTitleToCopy}\n${resultTextToCopy}\n\n📌 결정 경로 요약:\n`;
+        originalUserPathWithEmoji.filter(p => !p.includes("도우미를 시작합니다") && !p.startsWith("➡️ 최종 결과:")).forEach(step => {
+          contentToCopy += `- ${step}\n`;
         });
-
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(contentToCopy)
             .then(() => { alert('결과 내용이 클립보드에 복사되었습니다!'); })
@@ -497,7 +483,7 @@
       };
       buttonsGroup.appendChild(copyBtn);
       
-      container.appendChild(buttonsGroup); // 버튼 그룹을 요약 컨테이너에 추가
+      container.appendChild(buttonsGroup);
       restartButton.insertAdjacentElement('beforebegin', container);
     }
 
@@ -516,8 +502,6 @@
       displayQuestion(currentQuestionId);
       window.scrollTo(0, 0);
     }
-
-    restartButton.addEventListener('click', restart);
 
     logToPath('✨ 구매 의사 결정 도우미를 시작합니다 ✨', '✨ 구매 의사 결정 도우미를 시작합니다 ✨');
     displayQuestion(currentQuestionId);
