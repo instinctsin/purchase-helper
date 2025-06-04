@@ -1,160 +1,534 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>구매 결정 목적 판단 도우미</title>
+  <title>구매 의사 결정 도우미 V2 - 최종 통합 (복사 기능 포함)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nanum+Gothic&display=swap" rel="stylesheet">
   <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
     body {
+      font-family: 'Nanum Gothic', 'Jua', sans-serif;
+      line-height: 1.6;
       margin: 0;
-      font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-      background-color: #fff9f9;
-      padding: 0;
-    }
-    .container {
-      max-width: 480px;
-      margin: auto;
       padding: 20px;
-      background-color: #ffeef2;
-      min-height: 100vh;
-    }
-    .question {
-      font-size: 1.3em;
-      text-align: center;
-      margin: 30px 0;
-      color: #cc3366;
-    }
-    .options {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      align-items: center;
-    }
-    .button {
-      background-color: #ff99cc;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 14px 20px;
-      width: 80%;
-      font-size: 1.1em;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
-    }
-    .button:hover {
-      background-color: #ff66aa;
-    }
-    .result {
-      font-size: 1.2em;
-      margin-top: 30px;
-      text-align: center;
+      background-color: #fffafc;
       color: #444;
     }
-    .emoji {
-      font-size: 2.5em;
-      margin-bottom: 10px;
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(255, 182, 193, 0.3);
+      border: 2px dashed #ffd1dc;
     }
+    h1, h2 {
+      color: #d26a94;
+      text-align: center;
+    }
+    /* 경로 추적 스타일 */
+    #path-tracker {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #fff0f5;
+      border-radius: 12px;
+      border: 1px solid #ffe4ec;
+    }
+    #path-tracker h2 {
+      font-size: 1em;
+      margin-top: 0;
+      text-align: left;
+      color: #c86485;
+    }
+    #path-list {
+      list-style-type: none;
+      padding-left: 0;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    #path-list li {
+      padding: 6px 0 6px 25px;
+      border-bottom: 1px dashed #ffd1dc;
+      font-size: 0.95em;
+      position: relative;
+    }
+    #path-list li::before {
+      content: "💗";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #ff85a2;
+    }
+    #path-list li:last-child {
+        border-bottom: none;
+    }
+
+    /* 질문 영역 스타일 */
+    #question-area {
+      padding: 20px;
+      border: 2px solid #ffe4ec;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      background-color: #fff5f8;
+    }
+    #question-title {
+      margin-top: 0;
+      color: #e6739f;
+    }
+    /* 아이템 입력 필드 스타일 */
+    #item-input {
+      margin-bottom: 20px;
+    }
+    #item-input label {
+        display: block;
+        margin-bottom: 8px;
+        color: #c86485;
+        font-weight: bold;
+    }
+    #item-name {
+      width: 100%;
+      padding: 10px;
+      font-size: 1em;
+      border: 1px solid #ffd1dc;
+      border-radius: 8px;
+      font-family: 'Nanum Gothic', sans-serif;
+    }
+    #item-name:focus {
+        outline: none;
+        border-color: #ff8fa3;
+        box-shadow: 0 0 5px rgba(255, 182, 193, 0.5);
+    }
+
+    /* 옵션 버튼 스타일 */
+    #options-area button {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin-top: 10px;
+      background-color: #ffb6c1;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1.05em;
+      font-family: 'Jua', sans-serif;
+      font-weight: normal;
+      box-shadow: 0 4px 10px rgba(255, 182, 193, 0.4);
+      transition: all 0.2s ease-in-out;
+    }
+    #options-area button:hover {
+      background-color: #ff8fa3;
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 6px 12px rgba(255, 182, 193, 0.5);
+    }
+    #options-area button.secondary {
+      background-color: #f0ad4e;
+    }
+    #options-area button.secondary:hover {
+      background-color: #ec971f;
+    }
+    #options-area button.tertiary {
+      background-color: #d9534f;
+    }
+    #options-area button.tertiary:hover {
+      background-color: #c9302c;
+    }
+
+    /* 결과 영역 스타일 */
+    #result-area {
+      padding: 20px;
+      background-color: #e0ffe0;
+      border: 2px dashed #b2fab4;
+      color: #3c763d;
+      border-radius: 10px;
+      text-align: center;
+    }
+    #result-area.negative {
+      background-color: #ffe6ea;
+      border-color: #f5c6cb;
+      color: #b33c50;
+    }
+    #restart-button {
+      padding: 12px 24px;
+      background-color: #a6c8ff;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1em;
+      margin-top: 20px;
+      font-family: 'Jua', sans-serif;
+      box-shadow: 0 4px 10px rgba(173, 216, 230, 0.4);
+      transition: all 0.2s ease-in-out;
+    }
+    #restart-button:hover {
+      background-color: #82b4ff;
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 6px 12px rgba(173, 216, 230, 0.5);
+    }
+
+    /* 요약 및 버튼 그룹 스타일 */
+    .summary-and-buttons-container { /* 클래스명 일관성 있게 수정 */
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        text-align: left;
+    }
+    .summary-and-buttons-container h3 {
+        margin-top: 0;
+        color: #495057;
+        font-size: 1.1em;
+        border-bottom: 1px solid #ced4da;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+    }
+    .summary-and-buttons-container ul {
+        list-style-type: none;
+        padding-left: 0;
+        margin-bottom: 15px;
+    }
+    .summary-and-buttons-container li {
+        font-size: 0.9em;
+        padding: 3px 0;
+        color: #6c757d;
+    }
+    .buttons-group { /* 버튼들을 그룹핑하기 위한 스타일 */
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px solid #eee;
+        text-align: center; /* 버튼들 가운데 정렬 */
+    }
+    .buttons-group button { /* 모든 그룹 내 버튼 공통 스타일 */
+        padding: 8px 15px;
+        margin: 5px;
+        border-radius: 20px;
+        border: none;
+        cursor: pointer;
+        font-family: 'Nanum Gothic', sans-serif;
+        font-weight: bold;
+        transition: all 0.2s ease;
+        color: white;
+    }
+    .buttons-group button.save-txt { background-color: #6c757d; }
+    .buttons-group button.save-txt:hover { background-color: #5a6268; }
+    .buttons-group button.save-md { background-color: #007bff; }
+    .buttons-group button.save-md:hover { background-color: #0056b3; }
+    .buttons-group button.save-json { background-color: #28a745; }
+    .buttons-group button.save-json:hover { background-color: #1e7e34; }
+    .buttons-group button.save-pdf { background-color: #dc3545; }
+    .buttons-group button.save-pdf:hover { background-color: #c82333; }
+    .buttons-group button.copy-button { background-color: #17a2b8; }
+    .buttons-group button.copy-button:hover { background-color: #138496; }
+
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="question" id="question">🤔 지금 이 물건의 구매 목적은 무엇인가요?</div>
-    <div class="options" id="buttons">
-      <button class="button" onclick="choosePurpose('essential')">🧻 생필품</button>
-      <button class="button" onclick="choosePurpose('hobby')">🎨 취미/자기만족용</button>
-      <button class="button" onclick="choosePurpose('impulse')">🔥 충동/감정해소용</button>
-      <button class="button" onclick="choosePurpose('tech')">📱 전자기기</button>
-      <button class="button" onclick="choosePurpose('gift')">🎁 선물용</button>
+    <h1>💕 구매 의사 결정 도우미 V2 💕</h1>
+    <div id="path-tracker">
+      <h2>✨ 나의 결정 여정 ✨</h2>
+      <ul id="path-list"></ul>
     </div>
-    <div class="result" id="result"></div>
+    <div id="question-area">
+      <div id="item-input">
+        <label for="item-name">🛍️ 구매하려는 물건/서비스는 무엇인가요?</label>
+        <input type="text" id="item-name" placeholder="예: 최신형 스마트폰, 온라인 강의 수강권">
+      </div>
+      <h2 id="question-title"></h2>
+      <p id="question-text"></p>
+      <div id="options-area"></div>
+    </div>
+    <div id="result-area" style="display: none;">
+      <h2 id="result-title"></h2>
+      <p id="result-text"></p>
+      <!-- 요약 및 버튼이 여기에 동적으로 추가됩니다. -->
+      <button id="restart-button">🔄 처음부터 다시 고민하기 🔄</button>
+    </div>
   </div>
-
   <script>
-    let impulseStep = 0;
+    const questionArea = document.getElementById('question-area');
+    const questionTitleEl = document.getElementById('question-title');
+    const questionTextEl = document.getElementById('question-text');
+    const optionsArea = document.getElementById('options-area');
+    const resultArea = document.getElementById('result-area');
+    const resultTitleEl = document.getElementById('result-title');
+    const resultTextEl = document.getElementById('result-text');
+    const restartButton = document.getElementById('restart-button');
+    const pathListEl = document.getElementById('path-list');
+    const itemNameInput = document.getElementById('item-name');
 
-    function choosePurpose(type) {
-      const question = document.getElementById("question");
-      const buttons = document.getElementById("buttons");
-      const result = document.getElementById("result");
-      buttons.innerHTML = "";
-      result.innerHTML = "";
+    let currentQuestionId = 'start';
+    let userPath = [];
+    let originalUserPathWithEmoji = [];
 
-      if (type === 'impulse') {
-        impulseStep = 1;
-        question.innerText = "😤 지금 기분이 소비를 유도하고 있나요?";
-        buttons.innerHTML = `
-          <button class="button" onclick="nextImpulse('yes')">예</button>
-          <button class="button" onclick="nextImpulse('no')">아니오</button>
-        `;
+    const decisionTree = {
+        'start': { title: '🤔 1단계: 필요성 점검', text: '이것이 정말 필요한가요, 아니면 단순한 욕구인가요?', options: [ { text: '✔️ 정말 필요해요 (Need)', nextNodeId: 'need_check_alternatives' }, { text: '💖 그냥 갖고 싶어요 (Want)', nextNodeId: 'want_reconsider_1', type: 'secondary' } ] },
+        'need_check_alternatives': { title: '🤔 1-1단계: 필요성 심층 분석', text: '이것 없이 현재의 불편함/문제를 다른 방식으로 해결할 수 있나요?', options: [ { text: '아니오, 이 방법이 최선인 것 같아요.', nextNodeId: 'budget_check_initial' }, { text: '네, 다른 해결책도 있어요.', nextNodeId: 'explore_alternatives_first', type: 'secondary' } ] },
+        'explore_alternatives_first': { result: { title: '🤔 잠시만! 대안 탐색부터!', text: '다른 해결책을 먼저 충분히 탐색해 보세요. 구매는 그 이후에 고려해도 늦지 않습니다. 다른 좋은 방법이 있을지도 몰라요!', type: 'negative' } },
+        'want_reconsider_1': { title: '💸 1-1단계: 욕구 재고 (기회비용)', text: '이것을 구매함으로써 포기해야 하는 다른 중요한 것은 없나요? (예: 저축, 다른 필요한 물건, 소중한 경험)', options: [ { text: '괜찮아요, 이 갖고 싶은 마음을 포기할 수 없어요!', nextNodeId: 'want_impulse_check' }, { text: '음... 포기해야 할 것이 있네요. 소중한 다른 것을요.', nextNodeId: 'want_reconsider_2', type: 'secondary' } ] },
+        'want_impulse_check': { title: '🚨 1-2단계: 충동구매 방지턱', text: '혹시 지금 너무 즉흥적인 결정은 아닌가요? "24시간의 법칙"처럼, 하루 이틀 더 고민해보는 건 어때요?', options: [ { text: '이미 충분히 고민했어요! 이건 운명이에요!', nextNodeId: 'budget_check_initial' }, { text: '좋은 생각이에요, 조금 더 시간을 갖고 차분히 생각해볼게요.', nextNodeId: 'postpone_decision_for_want', type: 'secondary' } ] },
+        'postpone_decision_for_want': { result: { title: '😌 구매 보류: 신중한 고민이 필요해요', text: '충동구매는 종종 후회의 지름길이 될 수 있어요. 시간을 갖고 다시 한번 곰곰이 생각해보세요! 후회 없는 선택을 응원합니다.', type: 'negative' } },
+        'want_reconsider_2': { result: { title: '😥 구매 보류: 기회비용을 생각해주세요', text: '더 중요하거나 필요한 곳에 소중한 자원을 사용하는 것을 우선적으로 고려해보세요. 당신의 현명한 선택을 믿어요!', type: 'negative' } },
+        'budget_check_initial': { title: '💰 2단계: 예산 점검', text: '현재 준비된 예산 안에서 충분히 구매 가능한가요?', options: [ { text: '네, 예산은 충분하고 계획적이에요!', nextNodeId: 'product_research_start' }, { text: '아니오, 사실 예산이 좀 부족해요...', nextNodeId: 'budget_financing_check', type: 'secondary' } ] },
+        'budget_financing_check': { title: '💳 2-1단계: 추가 자금 조달 계획', text: '혹시 할부나 대출을 생각하고 있나요? 만약 그렇다면, 총 이자 비용까지 꼼꼼히 확인했고 감당 가능한 수준인가요?', options: [ { text: '네, 이자까지 고려해도 괜찮아요! 철저히 계산했어요.', nextNodeId: 'product_research_start' }, { text: '아니오, 추가 비용은 부담스러워요 / 계획 없어요.', nextNodeId: 'budget_save_up', type: 'secondary' } ] },
+        'budget_save_up': { result: { title: '⏳ 구매 보류: 예산 확보가 우선이에요', text: '무리한 지출은 미래의 나를 힘들게 할 수 있어요. 예산을 먼저 확보하는 것이 좋겠습니다. 차근차근 저축 계획을 세워보는 건 어때요?', type: 'negative' } },
+        'product_research_start': { title: '🔍 3단계: 제품/서비스 꼼꼼 조사', text: '최소 2-3개 이상의 다른 제품/서비스와 비교 분석했나요? (상세 스펙, 가격, 사용자 후기 등)', options: [ { text: '네, 탐정처럼 꼼꼼히 비교했어요!', nextNodeId: 'product_review_check' }, { text: '아니오, 아직 충분히 알아보지 못했어요.', nextNodeId: 'research_more_needed', type: 'secondary' } ] },
+        'research_more_needed': { result: { title: '📚 구매 보류: 더 많은 정보가 필요해요', text: '충분한 정보 없이 하는 구매는 실패 확률이 높아요. 시간을 들여 다양한 대안을 폭넓게 비교 분석해보세요!', type: 'negative' } },
+        'product_review_check': { title: '👍👎 3-1단계: 후기 및 단점 확인', text: '객관적인 전문가 리뷰나 믿을 만한 사용자 후기를 충분히 확인했나요? 그리고 이 제품/서비스의 명확한 단점도 알고 있나요?', options: [ { text: '네, 장단점 모두 파악했고 단점도 제가 감수할 수 있는 수준이에요!', nextNodeId: 'purchase_timing_check' }, { text: '아니오, 단점이 생각보다 치명적이거나 아직 잘 모르겠어요.', nextNodeId: 'reconsider_due_to_drawbacks', type: 'secondary' } ] },
+        'reconsider_due_to_drawbacks': { result: { title: '⚠️ 구매 재고려: 결정적인 단점 확인', text: '제품/서비스의 단점을 절대 간과하지 마세요! 만약 수용하기 어려운 단점이라면, 다른 더 좋은 대안을 찾아보는 것이 현명합니다.', type: 'negative' } },
+        'purchase_timing_check': { title: '⏰ 4단계: 구매 최적 시점 판단', text: '지금 당장 구매해야 하는 특별한 이유가 있나요? 아니면 조금 기다렸다가 더 좋은 조건(할인 행사, 신제품 출시 등)에 구매할 수도 있을까요?', options: [ { text: '지금이 바로 구매할 타이밍인 것 같아요!', nextNodeId: 'final_confirmation' }, { text: '기다릴 수 있고, 더 좋은 조건이 곧 나올 것 같아요.', nextNodeId: 'wait_for_better_deal', type: 'secondary' } ] },
+        'wait_for_better_deal': { result: { title: '🧘 구매 보류: 더 좋은 시기를 기다려봐요', text: '조급해할 필요 없어요! 현명한 기다림은 더 나은 가격이나 조건으로 원하는 것을 얻을 기회를 줄 수 있습니다. 여유를 가지세요!', type: 'negative' } },
+        'final_confirmation': { title: '💯 5단계: 최종 마음 확인', text: '지금까지 모든 것을 신중하게 고려했습니다. 이 구매가 정말 후회 없을 최선의 선택이라고 마음 깊이 확신하시나요?', options: [ { text: '네, 확신해요! 드디어 구매하겠습니다! 🎉', nextNodeId: 'purchase_confirmed' }, { text: '솔직히... 아직 조금 망설여지는 부분이 있어요... 🤔', nextNodeId: 'last_minute_hesitation', type: 'tertiary' } ] },
+        'last_minute_hesitation': { result: { title: '🚦 구매 직전, 마지막 점검!', text: '마지막 순간의 망설임은 어쩌면 중요한 신호일 수 있어요. 무엇이 마음에 걸리는지 다시 한번 솔직하게 점검해보세요. 필요하다면 처음부터 다시 한번 생각해보는 것도 좋은 방법입니다!', type: 'negative' } },
+        'purchase_confirmed': { result: { title: '💖✨ 구매 결정 완료! ✨💖', text: '축하합니다! 당신의 신중하고 현명한 고민 끝에 내린 결정입니다. 이 구매가 당신에게 큰 만족과 행복을 가져다주기를 바랍니다! 🥳', type: 'positive' } }
+    };
+
+    function removeEmoji(text) {
+        if (typeof text !== 'string') return '';
+        return text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD00-\uDDFF]|\uD83C[\uDDE6-\uDDFF]{2}|[\uD800-\uDBFF][\uDC00-\uDFFF])/g, '').trim();
+    }
+
+    function displayQuestion(nodeId) {
+      if (nodeId === 'start' && !itemNameInput.value.trim()) {
+        itemNameInput.focus();
+      }
+
+      const node = decisionTree[nodeId];
+      if (node.result) {
+        questionArea.style.display = 'none';
+        resultArea.style.display = 'block';
+        const itemName = itemNameInput.value.trim() || '입력된 아이템 없음';
+        resultTitleEl.textContent = node.result.title;
+        resultTextEl.textContent = `${node.result.text}\n\n🛍️ "${itemName}"에 대한 결정이었습니다.`;
+
+        resultArea.classList.remove('negative', 'positive');
+        if (node.result.type === 'negative') {
+          resultArea.classList.add('negative');
+        } else {
+          resultArea.classList.add('positive');
+        }
+        logToPath(`➡️ 최종 결과: ${removeEmoji(node.result.title)}`, `➡️ 최종 결과: ${node.result.title}`);
+        displaySummaryAndButtons(); // 함수명 변경에 따른 호출 변경
         return;
       }
 
-      switch(type) {
-        case 'essential':
-          question.innerText = "✅ 지금 꼭 필요한가요?";
-          buttons.innerHTML = `
-            <button class="button" onclick="showResult('🛒 생필품이 맞고 사용 중이라면 구매해도 좋습니다!')">예</button>
-            <button class="button" onclick="showResult('📦 집에 남은 재고가 있다면 다 쓴 후 재구매하세요!')">아니오</button>
-          `;
-          break;
-        case 'hobby':
-          question.innerText = "🎯 이 취미는 최소 3개월 이상 유지할 수 있을까요?";
-          buttons.innerHTML = `
-            <button class="button" onclick="showResult('🌟 지속 가능한 취미라면, 예산 내 소비는 긍정적입니다!')">예</button>
-            <button class="button" onclick="showResult('📁 과거에 비슷한 걸 사고도 안 썼다면, 재고 먼저 확인해보세요!')">아니오</button>
-          `;
-          break;
-        case 'tech':
-          question.innerText = "📱 지금 사용하는 기기가 기능적으로 부족한가요?";
-          buttons.innerHTML = `
-            <button class="button" onclick="showResult('🔋 성능 부족으로 불편하다면, 합리적 교체일 수 있습니다!')">예</button>
-            <button class="button" onclick="showResult('🪫 아직 쓸만하다면, 교체보다 유지가 경제적입니다.')">아니오</button>
-          `;
-          break;
-        case 'gift':
-          question.innerText = "🎁 이 선물은 상대에게 실용적이고 의미 있을까요?";
-          buttons.innerHTML = `
-            <button class="button" onclick="showResult('💝 의미 있는 선물이라면, 적절한 지출입니다!')">예</button>
-            <button class="button" onclick="showResult('🤔 그냥 형식적인 선물이라면, 대안(편지, 시간 등)을 고려해보세요!')">아니오</button>
-          `;
-          break;
+      if (nodeId !== 'start' && !itemNameInput.value.trim()) {
+          alert("구매하려는 물건/서비스를 먼저 입력해주세요! 🛍️");
+          itemNameInput.focus();
+          return;
       }
+
+      questionArea.style.display = 'block';
+      resultArea.style.display = 'none';
+      questionTitleEl.textContent = node.title;
+      questionTextEl.textContent = node.text;
+      optionsArea.innerHTML = '';
+
+      node.options.forEach(option => {
+        const button = document.createElement('button');
+        button.textContent = option.text;
+        if (option.type) button.classList.add(option.type);
+        button.onclick = () => {
+          logToPath(`"${removeEmoji(node.title)}" 질문에 "${removeEmoji(option.text)}" 선택`, `"${node.title}" 질문에 "${option.text}" 선택`);
+          currentQuestionId = option.nextNodeId;
+          displayQuestion(currentQuestionId);
+          window.scrollTo(0, 0);
+        };
+        optionsArea.appendChild(button);
+      });
     }
 
-    function nextImpulse(answer) {
-      const question = document.getElementById("question");
-      const buttons = document.getElementById("buttons");
-      if (impulseStep === 1 && answer === 'yes') {
-        impulseStep = 2;
-        question.innerText = "💡 감정을 해소할 다른 방법(산책, 대화 등)을 고려해봤나요?";
-        buttons.innerHTML = `
-          <button class="button" onclick="nextImpulse('yes2')">예</button>
-          <button class="button" onclick="nextImpulse('no2')">아니오</button>
-        `;
-      } else if (impulseStep === 1 && answer === 'no') {
-        showResult('👍 감정적 요소가 아니라면, 필요성 기준으로 판단해보세요!');
-      } else if (impulseStep === 2 && answer === 'yes2') {
-        showResult('🧘 감정 소비보다 다른 방식으로 스트레스를 해소해보세요. 소비는 나중에!');
-      } else if (impulseStep === 2 && answer === 'no2') {
-        question.innerText = "⏳ 1~3일 정도 미뤄보고 다시 사고 싶은지 생각해봤나요?";
-        buttons.innerHTML = `
-          <button class="button" onclick="showResult('✅ 충동이 아닌 지속적 욕구라면, 합리적으로 판단 가능합니다.')">예</button>
-          <button class="button" onclick="showResult('❌ 지금은 감정에 따른 소비일 수 있어요. 하루만 기다려보세요!')">아니오</button>
-        `;
+    function logToPath(messageForLog, messageForDisplay) {
+      userPath.push(messageForLog);
+      originalUserPathWithEmoji.push(messageForDisplay);
+
+      const li = document.createElement('li');
+      li.textContent = messageForDisplay;
+      pathListEl.appendChild(li);
+      pathListEl.scrollTop = pathListEl.scrollHeight;
+    }
+
+    function displaySummaryAndButtons() { // 함수명 변경
+      const existingContainer = resultArea.querySelector('.summary-and-buttons-container');
+      if (existingContainer) {
+        resultArea.removeChild(existingContainer);
       }
+
+      const item = itemNameInput.value.trim() || '입력된 아이템 없음';
+      const container = document.createElement('div');
+      container.classList.add('summary-and-buttons-container');
+
+      let summaryHTML = '<h3>📌 나의 결정 되짚어보기 📌</h3>';
+      summaryHTML += `<p><strong>구매 대상:</strong> ${item}</p><ul>`;
+      originalUserPathWithEmoji.forEach(step => {
+        if (!step.startsWith("➡️ 최종 결과:")) {
+            summaryHTML += `<li>${step}</li>`;
+        }
+      });
+      summaryHTML += '</ul>';
+      container.innerHTML = summaryHTML;
+
+      const buttonsGroup = document.createElement('div'); // 버튼들을 담을 그룹
+      buttonsGroup.classList.add('buttons-group');
+
+      // 파일 저장 버튼들
+      ['txt', 'md', 'json'].forEach(ext => {
+        const btn = document.createElement('button');
+        btn.textContent = `💾 ${ext.toUpperCase()}로 저장`;
+        btn.classList.add(`save-${ext}`);
+        btn.onclick = () => {
+          let content = '';
+          const today = new Date();
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          const dateString = `${year}${month}${day}`;
+          const safeItemName = removeEmoji(item).replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '');
+          const fileNameBase = `purchase_decision_${safeItemName || 'item'}_${dateString}`;
+
+          const finalDecisionTitle = removeEmoji(resultTitleEl.textContent);
+          const finalDecisionText = removeEmoji(resultTextEl.textContent.split('\n\n🛍️')[0]);
+
+          if (ext === 'txt') {
+            content = `구매 의사 결정 결과 (${dateString})\n\n구매 대상: ${item}\n\n## 결정 경로:\n${userPath.join('\n')}\n\n---\n최종 결정: ${finalDecisionTitle}\n${finalDecisionText}`;
+          } else if (ext === 'md') {
+            content = `# 구매 의사 결정 결과 (${dateString})\n\n**구매 대상:** ${item}\n\n## 결정 경로\n${userPath.map(s => `- ${s}`).join('\n')}\n\n---\n**최종 결정:** ${finalDecisionTitle}\n\n${finalDecisionText}`;
+          } else {
+            content = JSON.stringify({
+              itemName: item,
+              decisionDate: `${year}-${month}-${day}`,
+              decisionPath: userPath,
+              fullLogWithEmoji: originalUserPathWithEmoji,
+              finalDecisionTitle: finalDecisionTitle,
+              finalDecisionText: finalDecisionText
+            }, null, 2);
+          }
+          const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${fileNameBase}.${ext}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        };
+        buttonsGroup.appendChild(btn);
+      });
+
+      const pdfBtn = document.createElement('button');
+      pdfBtn.textContent = '📄 PDF로 저장';
+      pdfBtn.classList.add('save-pdf');
+      pdfBtn.onclick = () => {
+        if (typeof html2pdf !== 'undefined') {
+          const today = new Date();
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          const dateString = `${year}${month}${day}`;
+          const safeItemName = removeEmoji(item).replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '');
+          const fileNameBase = `purchase_decision_${safeItemName || 'item'}_${dateString}`;
+
+          let pdfContentHTML = `<h1>💕 구매 의사 결정 결과 💕</h1>`;
+          pdfContentHTML += `<h2>✨ "${item}"에 대한 결정 (${year}-${month}-${day}) ✨</h2>`;
+          pdfContentHTML += `<h3>최종 결과: ${resultTitleEl.textContent}</h3>`;
+          pdfContentHTML += `<p>${resultTextEl.textContent.replace(/\n/g, '<br>')}</p>`;
+          pdfContentHTML += `<h3>📌 나의 결정 되짚어보기 📌</h3><ul>`;
+          originalUserPathWithEmoji.forEach(step => {
+             if (!step.startsWith("➡️ 최종 결과:")) {
+                pdfContentHTML += `<li>${step}</li>`;
+            }
+          });
+          pdfContentHTML += `</ul>`;
+          const elementToPrint = document.createElement('div');
+          elementToPrint.style.fontFamily = "'Nanum Gothic', 'Jua', sans-serif";
+          elementToPrint.style.padding = "20px";
+          elementToPrint.innerHTML = pdfContentHTML;
+          const opt = { margin: 1, filename: `${fileNameBase}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas:  { scale: 2, logging: true, useCORS: true, letterRendering: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }};
+          html2pdf().from(elementToPrint).set(opt).save();
+        } else {
+          alert('PDF 저장 기능을 사용하려면 인터넷 연결을 확인하거나, 잠시 후 다시 시도해주세요. (html2pdf 라이브러리 로딩 중)');
+        }
+      };
+      buttonsGroup.appendChild(pdfBtn);
+
+      // 결과 내용 복사 버튼
+      const copyBtn = document.createElement('button');
+      copyBtn.textContent = '📋 결과 내용 복사';
+      copyBtn.classList.add('copy-button');
+      copyBtn.onclick = () => {
+        const today = new Date();
+        const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const itemNameToCopy = itemNameInput.value.trim() || '입력된 아이템 없음';
+        const resultTitleToCopy = resultTitleEl.textContent;
+        const resultTextToCopy = resultTextEl.textContent.split('\n\n🛍️')[0];
+        
+        let contentToCopy = `🛍️ 구매 대상: ${itemNameToCopy}\n`;
+        contentToCopy += `🗓️ 결정일: ${dateString}\n\n`;
+        contentToCopy += `✨ 최종 결정: ${resultTitleToCopy}\n${resultTextToCopy}\n\n`;
+        contentToCopy += `📌 결정 경로 요약:\n`;
+        originalUserPathWithEmoji.forEach(step => {
+          if (!step.startsWith("➡️ 최종 결과:")) {
+            contentToCopy += `- ${step}\n`;
+          }
+        });
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(contentToCopy)
+            .then(() => { alert('결과 내용이 클립보드에 복사되었습니다!'); })
+            .catch(err => { console.error('클립보드 복사 실패:', err); alert('클립보드 복사에 실패했습니다.'); });
+        } else {
+          const textArea = document.createElement("textarea");
+          textArea.value = contentToCopy;
+          textArea.style.position = "fixed"; textArea.style.left = "-9999px";
+          document.body.appendChild(textArea);
+          textArea.focus(); textArea.select();
+          try { document.execCommand('copy'); alert('결과 내용이 클립보드에 복사되었습니다!'); }
+          catch (err) { console.error('클립보드 복사 실패 (execCommand):', err); alert('클립보드 복사에 실패했습니다.'); }
+          document.body.removeChild(textArea);
+        }
+      };
+      buttonsGroup.appendChild(copyBtn);
+      
+      container.appendChild(buttonsGroup); // 버튼 그룹을 요약 컨테이너에 추가
+      restartButton.insertAdjacentElement('beforebegin', container);
     }
 
-    function showResult(message) {
-      const question = document.getElementById("question");
-      const buttons = document.getElementById("buttons");
-      const result = document.getElementById("result");
+    function restart() {
+      currentQuestionId = 'start';
+      userPath = [];
+      originalUserPathWithEmoji = [];
+      pathListEl.innerHTML = '';
+      itemNameInput.value = '';
 
-      question.innerText = "💡 소비 판단 결과";
-      buttons.innerHTML = "";
-      result.innerHTML = `<div class="emoji">📊</div><div>${message}</div>`;
+      const summaryContainer = resultArea.querySelector('.summary-and-buttons-container');
+      if (summaryContainer) {
+        resultArea.removeChild(summaryContainer);
+      }
+      logToPath('✨ 구매 의사 결정 도우미를 새로 시작합니다 ✨', '✨ 구매 의사 결정 도우미를 새로 시작합니다 ✨');
+      displayQuestion(currentQuestionId);
+      window.scrollTo(0, 0);
     }
+
+    restartButton.addEventListener('click', restart);
+
+    logToPath('✨ 구매 의사 결정 도우미를 시작합니다 ✨', '✨ 구매 의사 결정 도우미를 시작합니다 ✨');
+    displayQuestion(currentQuestionId);
+
+    const pdfScript = document.createElement('script');
+    pdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    pdfScript.integrity = 'sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==';
+    pdfScript.crossOrigin = 'anonymous';
+    pdfScript.onload = () => console.log('📄 html2pdf.js 로드 완료');
+    pdfScript.onerror = () => { console.error('html2pdf.js 로드 실패.'); };
+    document.body.appendChild(pdfScript);
   </script>
 </body>
 </html>
